@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>// admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <!-- ========== LOGIN ========== -->
+    <div class="login-page" id="login-view">
+        <div class="login-card">
+            <div class="terminal">
+                <span class="prompt">$</span> ssh admin@service<br>
+                <span style="color:var(--text-low);">authentication required ...</span>
+            </div>
+            <h1>Admin</h1>
+            <form id="login-form">
+                <div class="field">
+                    <label>username</label>
+                    <input type="text" name="username" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label>password</label>
+                    <input type="password" name="password" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="primary submit">→ login</button>
+                <div class="error" id="login-error"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div id="dashboard-view" style="display:none;">
+        <header class="site-header">
+            <div class="inner">
+                <div class="brand">
+                    <span class="dot"></span>
+                    admin<span class="slash">/</span><span class="accent">panel</span>
+                </div>
+                <div class="nav-actions">
+                    <span class="badge" id="me-badge">—</span>
+                    <button id="logout-btn">logout</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-layout">
+            <div class="admin-tabs">
+                <button class="tab active" data-tab="analytics">// auswertung</button>
+                <button class="tab" data-tab="services">// services</button>
+                <button class="tab" data-tab="orders">// bestellungen</button>
+            </div>
+
+            <!-- =========== ANALYTICS =========== -->
+            <div class="tab-panel active" id="tab-analytics">
+                <div class="stat-cards" id="stat-cards"></div>
+
+                <div class="analytics-grid">
+                    <div class="panel">
+                        <h3>Umsatz (letzte 14 Tage)</h3>
+                        <div id="chart-14d"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>Top Services</h3>
+                        <div id="top-services"></div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid" style="margin-top:24px;">
+                    <div class="panel">
+                        <h3>Status-Verteilung</h3>
+                        <div id="status-dist"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>Zahlungsmethoden</h3>
+                        <div id="payment-dist"></div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top:24px;">
+                    <h3>Letzte Bestellungen</h3>
+                    <div id="recent-orders"></div>
+                </div>
+            </div>
+
+            <!-- =========== SERVICES =========== -->
+            <div class="tab-panel" id="tab-services">
+                <div class="admin-grid">
+                    <div class="panel">
+                        <h3 id="service-form-title">Neuer Service</h3>
+                        <form id="service-form">
+                            <input type="hidden" name="id">
+                            <div class="field">
+                                <label>name</label>
+                                <input type="text" name="name" required>
+                            </div>
+                            <div class="field">
+                                <label>beschreibung</label>
+                                <textarea name="description" rows="3"></textarea>
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>preis (EUR)</label>
+                                    <input type="number" name="price_eur" step="0.01" min="0" required>
+                                </div>
+                                <div class="field">
+                                    <label>kategorie</label>
+                                    <input type="text" name="category" placeholder="z.B. Beratung">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>dauer / aufwand</label>
+                                <input type="text" name="duration" placeholder="z.B. 60 min, 1-2 Tage">
+                            </div>
+                            <div class="field">
+                                <label>bild-url</label>
+                                <input type="url" name="image_url" placeholder="https://...">
+                            </div>
+                            <div class="field" style="display:flex;align-items:center;gap:10px;">
+                                <input type="checkbox" name="active" id="service-active" checked style="width:auto;margin:0;">
+                                <label for="service-active" style="margin:0;font-family:var(--mono);text-transform:none;">sichtbar im shop</label>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:16px;">
+                                <button type="submit" class="primary" style="flex:1;" id="service-save-btn">+ speichern</button>
+                                <button type="button" id="service-cancel-btn" style="display:none;">abbrechen</button>
+                            </div>
+                            <div class="error" id="service-error" style="color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:8px;min-height:1.2em;"></div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <div class="section-header">
+                            <h2>Katalog</h2>
+                            <span class="meta" id="services-meta"></span>
+                        </div>
+                        <div class="admin-product-list" id="admin-services"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========== ORDERS =========== -->
+            <div class="tab-panel" id="tab-orders">
+                <div class="section-header">
+                    <h2>Bestellungen</h2>
+                    <span class="meta" id="orders-meta"></span>
+                </div>
+                <div class="orders-list" id="orders-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

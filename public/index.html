@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>// services</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header class="site-header">
+        <div class="inner">
+            <div class="brand">
+                <span class="dot"></span>
+                <span id="brand-name">services</span><span class="slash">/</span><span class="accent">dev</span>
+            </div>
+            <div class="nav-actions">
+                <span class="badge" id="status-badge">online</span>
+                <button class="cart-button" id="cart-toggle">
+                    [ buchung ]
+                    <span class="count" id="cart-count" style="display:none;">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="kicker">/ services v1.0 — pay with crypto</div>
+            <h1>Dienstleistungen.<br><span class="accent">Direkt buchbar.</span></h1>
+            <p>Wähle eine Leistung, beschreibe was du brauchst, zahle in Crypto. Kein Account, kein Problem.</p>
+        </section>
+
+        <section class="products">
+            <div class="section-header">
+                <h2>Leistungen</h2>
+                <span class="meta" id="services-meta">— wird geladen ...</span>
+            </div>
+            <div class="product-grid" id="services-grid"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div id="footer-business">© service · built with node + postgres</div>
+    </footer>
+
+    <!-- Drawer -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <aside class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h3 id="drawer-title">Auswahl</h3>
+            <button id="cart-close">×</button>
+        </div>
+
+        <!-- View 1: Auswahl -->
+        <div id="cart-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+            <div class="cart-items" id="cart-items"></div>
+            <div class="cart-footer" id="cart-footer" style="display:none;">
+                <div class="total-row">
+                    <span class="label">Gesamt</span>
+                    <span class="value" id="cart-total">€ 0,00</span>
+                </div>
+                <button class="primary checkout-btn" id="checkout-btn">→ Weiter</button>
+            </div>
+        </div>
+
+        <!-- View 2: Checkout -->
+        <form class="checkout-form" id="checkout-form" style="display:none;">
+            <span class="back-link" id="back-to-cart">← zurück</span>
+            <div class="field">
+                <label>name</label>
+                <input type="text" name="customer_name" required>
+            </div>
+            <div class="field">
+                <label>e-mail</label>
+                <input type="email" name="customer_email" required>
+            </div>
+            <div class="field">
+                <label>telefon (optional)</label>
+                <input type="tel" name="customer_phone">
+            </div>
+            <div class="field">
+                <label>details / anmerkungen</label>
+                <textarea name="notes" rows="4" placeholder="Was brauchst du? Wunschtermin? Links zu Beispielen?"></textarea>
+            </div>
+            <div class="field">
+                <label>zahlungsmethode</label>
+                <div class="crypto-options" id="crypto-options"></div>
+            </div>
+            <div class="summary" id="checkout-summary"></div>
+            <button type="submit" class="primary checkout-btn" id="place-order-btn">→ Anfrage absenden</button>
+        </form>
+
+        <!-- View 3: Payment -->
+        <div id="payment-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+            <div class="payment-result">
+                <div class="payment-confirm">
+                    <div class="check">✓</div>
+                    <h2>Anfrage <span id="confirm-id">#0</span> erhalten</h2>
+                    <p>Wir senden dir die Zahlungsdaten gleich auch per Mail.</p>
+                </div>
+                <div class="payment-block">
+                    <div class="payment-header">
+                        <span class="kicker">/ zahlung — <span id="payment-currency-label"></span></span>
+                    </div>
+                    <div class="payment-amount">
+                        <div class="label">betrag</div>
+                        <div class="value" id="payment-amount">€ 0,00</div>
+                    </div>
+                    <div class="payment-address-block">
+                        <div class="label">an folgende adresse senden:</div>
+                        <div class="address-row">
+                            <code id="payment-address">—</code>
+                            <button type="button" id="copy-address">copy</button>
+                        </div>
+                    </div>
+                    <div class="payment-ref">
+                        <div class="label">verwendungszweck:</div>
+                        <code id="payment-reference">—</code>
+                    </div>
+                    <div class="payment-info">
+                        Sobald die Zahlung bestätigt ist, melden wir uns mit den nächsten Schritten.
+                    </div>
+                </div>
+                <button class="primary checkout-btn" id="payment-done-btn">fertig</button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/shop.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: shop_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: shop_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # --- DB ---
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+
+      # --- Auth ---
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_PATH: ${ADMIN_PATH}
+
+      # --- Mail ---
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+
+      # --- Business-Info (für Rechnungen + Footer) ---
+      BUSINESS_NAME:    ${BUSINESS_NAME}
+      BUSINESS_ADDRESS: ${BUSINESS_ADDRESS}
+      BUSINESS_EMAIL:   ${BUSINESS_EMAIL}
+      BUSINESS_VAT:     ${BUSINESS_VAT}
+
+      # --- Crypto-Wallets (leer lassen = nicht angeboten) ---
+      CRYPTO_BTC_ADDRESS:  ${CRYPTO_BTC_ADDRESS}
+      CRYPTO_ETH_ADDRESS:  ${CRYPTO_ETH_ADDRESS}
+      CRYPTO_USDT_ADDRESS: ${CRYPTO_USDT_ADDRESS}
+      CRYPTO_XMR_ADDRESS:  ${CRYPTO_XMR_ADDRESS}
+      CRYPTO_LTC_ADDRESS:  ${CRYPTO_LTC_ADDRESS}
+      CRYPTO_SOL_ADDRESS:  ${CRYPTO_SOL_ADDRESS}
+    ports:
+      - "4545:3000"
+
+volumes:
+  db_data:
