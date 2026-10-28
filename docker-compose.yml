@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:16-alpine   # Hauptversion fest; Update auf 17 braucht pg_dump/restore
     container_name: shop_db
     restart: unless-stopped
     environment:
@@ -15,6 +15,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Fängt alle Mails ab (Test/Entwicklung), Weboberfläche: http://localhost:8025
+  # Für echten Versand SMTP_* in .env auf einen richtigen Anbieter setzen.
+  mailpit:
+    image: axllent/mailpit:v1
+    container_name: shop_mail
+    restart: unless-stopped
+    networks:
+      default:
+        aliases: [mailhog]          # alte .env-Dateien mit SMTP_HOST=mailhog funktionieren weiter
+    ports:
+      - "127.0.0.1:8025:8025"
 
   app:
     build: .
@@ -61,7 +73,7 @@ services:
       CRYPTO_LTC_ADDRESS:  ${CRYPTO_LTC_ADDRESS}
       CRYPTO_SOL_ADDRESS:  ${CRYPTO_SOL_ADDRESS}
     ports:
-      - "4545:3000"
+      - "127.0.0.1:4545:3000"   # nur lokal; nach außen über Reverse-Proxy/Tunnel mit HTTPS
 
 volumes:
   db_data:

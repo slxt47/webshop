@@ -26,6 +26,22 @@ const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const ADMIN_PATH = (process.env.ADMIN_PATH || 'manage-x7k9p2').replace(/^\/+|\/+$/g, '');
 
+// In Produktion nie mit Standard-Zugangsdaten starten (die stehen öffentlich in README und .env.example)
+if (process.env.NODE_ENV === 'production') {
+    const fehlt = [];
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) fehlt.push('JWT_SECRET (mind. 32 Zeichen)');
+    if (!process.env.ADMIN_PASSWORD || ['admin123', 'admin'].includes(process.env.ADMIN_PASSWORD)) fehlt.push('ADMIN_PASSWORD');
+    if (!process.env.ADMIN_PATH || ADMIN_PATH === 'manage-x7k9p2' || ADMIN_PATH === 'admin') fehlt.push('ADMIN_PATH');
+    if (fehlt.length) {
+        console.error('FATAL: in .env eigene Werte setzen für: ' + fehlt.join(', '));
+        process.exit(1);
+    }
+}
+// Cookie nur über HTTPS senden – Standard in Produktion, für lokales HTTP: COOKIE_SECURE=false
+const COOKIE_SECURE = process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === 'true'
+    : process.env.NODE_ENV === 'production';
+
 const BUSINESS = {
     name:    process.env.BUSINESS_NAME || 'Mein Service',
     address: process.env.BUSINESS_ADDRESS || '',
@@ -353,7 +369,7 @@ app.post('/api/admin/login', async (req, res) => {
     res.cookie('admin_token', token, {
         httpOnly: true,
         sameSite: 'lax',
-        // secure: true,  // einschalten wenn HTTPS aktiv
+        secure: COOKIE_SECURE,
         maxAge: 12 * 60 * 60 * 1000,
     });
     res.json({ ok: true });

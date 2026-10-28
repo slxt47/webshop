@@ -9,7 +9,7 @@ Alles in **einem Befehl** via Docker startbar.
 - **Backend:** Node.js (Express) + JWT-Auth + Login-Rate-Limiting
 - **Datenbank:** PostgreSQL 16
 - **PDF:** PDFKit (Rechnungs-Generierung)
-- **E-Mail:** Nodemailer + Mailhog (Dev-SMTP)
+- **E-Mail:** Nodemailer + Mailpit (fängt Test-Mails ab)
 - **Frontend:** Vanilla HTML/CSS/JS, Dark-Tech-Theme
 
 ## Schnellstart
@@ -26,9 +26,9 @@ docker compose up -d --build
 |-------------------------------------|------------------------------------|
 | http://localhost:3000               | Shop / Service-Buchung             |
 | http://localhost:3000/{ADMIN_PATH}  | Admin-Panel (geheime URL!)         |
-| http://localhost:8025               | Mailhog — gesendete E-Mails ansehen |
+| http://localhost:8025               | Mailpit — gesendete E-Mails ansehen |
 
-`ADMIN_PATH` aus `.env`. Standard ist `manage-x7k9p2` — **unbedingt ändern**.
+`ADMIN_PATH` aus `.env`. Mit `NODE_ENV=production` (Standard in der `docker-compose.yml`) **startet der Shop nicht**, solange `JWT_SECRET`, `ADMIN_PASSWORD` oder `ADMIN_PATH` auf den Beispielwerten stehen.
 Wenn jemand `/admin` aufruft kommt 404 — der Pfad existiert scheinbar gar nicht.
 
 ## Features
@@ -108,7 +108,7 @@ Vor dem Online-Stellen unbedingt:
    - `ADMIN_USER` / `ADMIN_PASSWORD`
    - `JWT_SECRET` → mit `openssl rand -hex 32` erzeugen
    - `ADMIN_PATH` → eigener geheimer String
-2. `secure: true` für das Cookie aktivieren in `server.js` (sobald HTTPS aktiv ist)
+2. Das Login-Cookie ist in Produktion automatisch `secure` (nur über HTTPS). Lokal ohne HTTPS: `COOKIE_SECURE=false` setzen
 3. Hinter Reverse-Proxy mit HTTPS stellen (Caddy, nginx, Traefik …)
 4. Echten SMTP-Provider statt Mailhog
 5. Postgres-Backups einrichten (z.B. `pg_dump` im Cron)
@@ -142,3 +142,15 @@ shop/
         ├── shop.js
         └── admin.js
 ```
+
+## Änderungen (Oktober 2026)
+
+- **`.gitignore` ergänzt.** Es fehlte, dadurch war früher eine echte `.env` im Repo
+  (inzwischen gelöscht, steht aber noch in der Git-Historie, die Werte sind ausgetauscht).
+- In Produktion verweigert der Server den Start mit Standard-Zugangsdaten
+  (`admin123`, `dev-only-secret`, `manage-x7k9p2`).
+- Login-Cookie in Produktion nur über HTTPS (`COOKIE_SECURE`).
+- Port nur auf `127.0.0.1`, davor gehört ein Reverse-Proxy oder Tunnel mit HTTPS.
+- Fehler behoben: README und `.env.example` versprachen Mailhog, die Compose-Datei startete aber keinen
+  Mail-Dienst. Jetzt läuft **Mailpit** (auch unter dem Namen `mailhog` erreichbar).
+
