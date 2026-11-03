@@ -10,7 +10,7 @@ Alles in **einem Befehl** via Docker startbar.
 - **Datenbank:** PostgreSQL 16
 - **PDF:** PDFKit (Rechnungs-Generierung)
 - **E-Mail:** Nodemailer + Mailhog (Dev-SMTP)
-- **Frontend:** Vanilla HTML/CSS/JS ohne Build-Schritt, Design nach Apple HIG (Systemschrift, keine Web-Fonts, kein CDN), **hell/dunkel umschaltbar** (Standard hell)
+- **Frontend:** Vanilla HTML/CSS/JS ohne Build-Schritt, Design nach Apple HIG (Systemschrift, keine Web-Fonts, kein CDN), **hell/dunkel umschaltbar** (Standard dunkel)
 
 ## Schnellstart
 
@@ -35,7 +35,7 @@ Wenn jemand `/admin` aufruft kommt 404 — der Pfad existiert scheinbar gar nich
 
 ### Public Shop (`/`)
 - Design wie die übrigen slxt-Seiten: Himmel-Verlauf, Sternenhimmel im dunklen Modus, Glas-Kopfleiste, 44-pt-Trefferflächen
-- **Hell/Dunkel-Schalter** in der Kopfleiste (`public/js/modus.js`, Wahl bleibt im Browser, Standard hell)
+- **Hell/Dunkel-Schalter** in der Kopfleiste (`public/js/modus.js`, Wahl bleibt im Browser, Standard dunkel)
 - **Impressum** (`/impressum`) und **Datenschutz** (`/datenschutz`) als eigene Seiten
 - Service-Katalog mit Kategorie + Aufwand pro Service
 - Buchungs-Drawer (Mehrfachauswahl, Mengen)
