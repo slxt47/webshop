@@ -31,9 +31,9 @@ async function loadServices() {
         const r = await fetch('/api/services');
         services = await r.json();
         renderServices();
-        $('#services-meta').textContent = `${services.length} services available`;
+        $('#services-meta').textContent = services.length === 1 ? '1 Leistung' : `${services.length} Leistungen`;
     } catch (err) {
-        $('#services-meta').textContent = 'Fehler beim Laden';
+        $('#services-meta').textContent = 'Konnte nicht geladen werden';
         console.error(err);
     }
 }
@@ -41,15 +41,15 @@ async function loadServices() {
 function renderServices() {
     const grid = $('#services-grid');
     if (services.length === 0) {
-        grid.innerHTML = '<div class="empty-state">Aktuell keine Leistungen verfügbar.</div>';
+        grid.innerHTML = '<div class="empty-state"><strong>Gerade keine Leistungen</strong><span>Schau bald wieder vorbei – oder schreib an die Adresse unten.</span></div>';
         return;
     }
     grid.innerHTML = services.map(s => {
         const img = s.image_url
             ? `<img src="${escapeHtml(s.image_url)}" alt="${escapeHtml(s.name)}" loading="lazy" onerror="this.style.opacity=0.3">`
-            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-low);font-family:var(--mono);font-size:12px;">no image</div>`;
+            : `<div style="display:grid;place-items:center;height:100%;background:var(--verlauf);color:#fff;font:800 3rem var(--anzeige);opacity:.9;" aria-hidden="true">${escapeHtml((s.name || '?').charAt(0).toUpperCase())}</div>`;
         const cat = s.category ? `<span class="tag">${escapeHtml(s.category)}</span>` : '';
-        const dur = s.duration ? `<span class="tag muted">⌛ ${escapeHtml(s.duration)}</span>` : '';
+        const dur = s.duration ? `<span class="tag muted">${escapeHtml(s.duration)}</span>` : '';
         return `
         <article class="product-card">
             <div class="image">
@@ -63,7 +63,7 @@ function renderServices() {
                 <div class="row">
                     <span class="price">${fmt(s.price_cents)}</span>
                 </div>
-                <button class="add-btn" data-id="${s.id}">+ buchen</button>
+                <button class="add-btn" type="button" data-id="${s.id}" aria-label="${escapeHtml(s.name)} hinzufügen">Hinzufügen</button>
             </div>
         </article>`;
     }).join('');
@@ -81,7 +81,7 @@ function addToCart(id) {
     if (existing) existing.qty += 1;
     else cart.set(id, { service: s, qty: 1 });
     renderCart();
-    toast(`✓ ${s.name} hinzugefügt`, 'success');
+    toast(`${s.name} hinzugefügt`, 'success');
     openCart();
 }
 
@@ -112,23 +112,24 @@ function renderCart() {
     const cnt = $('#cart-count');
     if (count > 0) { cnt.style.display = 'block'; cnt.textContent = count; }
     else cnt.style.display = 'none';
+    $('#cart-toggle').setAttribute('aria-label', count ? `Auswahl öffnen, ${count} ${count === 1 ? 'Leistung' : 'Leistungen'}` : 'Auswahl öffnen');
 
     if (cart.size === 0) {
-        items.innerHTML = '<div class="cart-empty">// noch nichts ausgewählt</div>';
+        items.innerHTML = '<div class="cart-empty">Noch nichts ausgewählt.<br>Tippe bei einer Leistung auf „Hinzufügen“.</div>';
         footer.style.display = 'none';
         return;
     }
 
     items.innerHTML = [...cart.values()].map(({ service: s, qty }) => `
         <div class="cart-item">
-            <img src="${escapeHtml(s.image_url || '')}" alt="" onerror="this.style.opacity=0.2">
+            ${s.image_url ? `<img src="${escapeHtml(s.image_url)}" alt="" onerror="this.style.opacity=0.2">` : `<div style="width:56px;height:56px;border-radius:12px;background:var(--verlauf);flex:none;" aria-hidden="true"></div>`}
             <div class="info">
                 <h4>${escapeHtml(s.name)}</h4>
-                <div class="qty">${fmt(s.price_cents)} / einheit</div>
+                <div class="qty">${fmt(s.price_cents)} pro Einheit</div>
                 <div class="controls">
-                    <button data-id="${s.id}" data-d="-1">−</button>
-                    <span style="font-family:var(--mono);font-size:13px;min-width:24px;text-align:center;">${qty}</span>
-                    <button data-id="${s.id}" data-d="1">+</button>
+                    <button type="button" data-id="${s.id}" data-d="-1" aria-label="${escapeHtml(s.name)}: eins weniger">−</button>
+                    <span style="font-variant-numeric:tabular-nums;font-weight:600;min-width:24px;text-align:center;" aria-label="Menge">${qty}</span>
+                    <button type="button" data-id="${s.id}" data-d="1" aria-label="${escapeHtml(s.name)}: eins mehr">+</button>
                 </div>
             </div>
             <div class="price">${fmt(s.price_cents * qty)}</div>
@@ -136,7 +137,7 @@ function renderCart() {
     `).join('');
 
     items.querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', e => {
-        changeQty(parseInt(e.target.dataset.id, 10), parseInt(e.target.dataset.d, 10));
+        changeQty(parseInt(e.currentTarget.dataset.id, 10), parseInt(e.currentTarget.dataset.d, 10));
     }));
 
     $('#cart-total').textContent = fmt(cartTotal());
@@ -144,15 +145,40 @@ function renderCart() {
 }
 
 // ---------- Drawer Views ----------
-function openCart()  { $('#cart-drawer').classList.add('open');    $('#cart-overlay').classList.add('open'); showCartView(); }
-function closeCart() { $('#cart-drawer').classList.remove('open'); $('#cart-overlay').classList.remove('open'); }
+// Blatt öffnen/schließen: Fokus ins Blatt und zurück, Esc schließt, Tab bleibt im Blatt, Seite dahinter nicht bedienbar
+let fokusVorher = null;
+function openCart() {
+    if (!$('#cart-drawer').classList.contains('open')) fokusVorher = document.activeElement;
+    $('#cart-drawer').classList.add('open'); $('#cart-overlay').classList.add('open');
+    document.querySelectorAll('body > header, body > main, body > footer').forEach(x => { x.inert = true; });
+    document.documentElement.style.overflow = 'hidden';
+    showCartView();
+    setTimeout(() => $('#cart-close').focus(), 50);
+}
+function closeCart() {
+    $('#cart-drawer').classList.remove('open'); $('#cart-overlay').classList.remove('open');
+    document.querySelectorAll('body > header, body > main, body > footer').forEach(x => { x.inert = false; });
+    document.documentElement.style.overflow = '';
+    (fokusVorher || $('#cart-toggle')).focus?.();
+}
+document.addEventListener('keydown', e => {
+    if (!$('#cart-drawer').classList.contains('open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeCart(); }
+    if (e.key === 'Tab') {
+        const f = [...$('#cart-drawer').querySelectorAll('button, input, textarea, a[href], [tabindex="0"]')].filter(x => !x.disabled && x.offsetParent);
+        if (!f.length) return;
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    }
+});
 
 function setView(name) {
     ['cart-view', 'checkout-form', 'payment-view'].forEach(id => {
         $('#' + id).style.display = 'none';
     });
     if (name === 'cart')      { $('#cart-view').style.display = 'flex'; $('#drawer-title').textContent = 'Auswahl'; }
-    if (name === 'checkout')  { $('#checkout-form').style.display = 'flex'; $('#checkout-form').style.flexDirection = 'column'; $('#drawer-title').textContent = 'Checkout'; }
+    if (name === 'checkout')  { $('#checkout-form').style.display = 'flex'; $('#checkout-form').style.flexDirection = 'column'; $('#drawer-title').textContent = 'Deine Angaben'; setTimeout(() => $('#f-name').focus(), 50); }
     if (name === 'payment')   { $('#payment-view').style.display = 'flex'; $('#payment-view').style.flexDirection = 'column'; $('#drawer-title').textContent = 'Zahlung'; }
 }
 
@@ -163,7 +189,7 @@ function showCheckoutView() {
     renderCryptoOptions();
     const sum = $('#checkout-summary');
     const rows = [...cart.values()].map(({ service: s, qty }) =>
-        `<div class="row"><span>${qty}× ${escapeHtml(s.name)}</span><span>${fmt(s.price_cents * qty)}</span></div>`
+        `<div class="row"><span>${qty} × ${escapeHtml(s.name)}</span><span>${fmt(s.price_cents * qty)}</span></div>`
     ).join('');
     sum.innerHTML = rows + `<div class="row total"><span>Gesamt</span><span>${fmt(cartTotal())}</span></div>`;
 }
@@ -179,7 +205,7 @@ async function loadCryptoOptions() {
 function renderCryptoOptions() {
     const box = $('#crypto-options');
     if (cryptoOptions.length === 0) {
-        box.innerHTML = '<div style="color:var(--danger);font-family:var(--mono);font-size:12px;">⚠ keine zahlungsoption konfiguriert</div>';
+        box.innerHTML = '<div style="color:var(--danger);font-size:var(--t-klein);">Gerade ist keine Zahlungsart eingerichtet – bitte später noch einmal versuchen.</div>';
         $('#place-order-btn').disabled = true;
         return;
     }
@@ -206,7 +232,7 @@ async function placeOrder(e) {
     const form = e.target;
     const btn = $('#place-order-btn');
     btn.disabled = true;
-    btn.textContent = 'wird gesendet ...';
+    btn.textContent = 'Wird gesendet …';
 
     const items = [...cart.values()].map(({ service, qty }) => ({
         service_id: service.id, quantity: qty,
@@ -226,7 +252,7 @@ async function placeOrder(e) {
             }),
         });
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error || 'Fehler');
+        if (!r.ok) throw new Error(data.error || 'Das hat nicht geklappt. Bitte noch einmal versuchen.');
 
         // Payment-View zeigen
         $('#confirm-id').textContent = '#' + data.order_id;
@@ -240,10 +266,10 @@ async function placeOrder(e) {
         renderCart();
         form.reset();
     } catch (err) {
-        toast('✗ ' + err.message, 'error');
+        toast(err.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = '→ Anfrage absenden';
+        btn.textContent = 'Anfrage senden';
     }
 }
 
@@ -251,9 +277,9 @@ async function copyAddress() {
     const addr = $('#payment-address').textContent;
     try {
         await navigator.clipboard.writeText(addr);
-        toast('✓ Adresse kopiert', 'success');
+        toast('Adresse kopiert', 'success');
     } catch {
-        toast('✗ Kopieren nicht möglich', 'error');
+        toast('Kopieren nicht möglich – bitte markieren und kopieren', 'error');
     }
 }
 
@@ -263,11 +289,9 @@ async function loadConfig() {
         const r = await fetch('/api/config');
         const cfg = await r.json();
         if (cfg.business_name) {
-            const slug = cfg.business_name.toLowerCase().replace(/\s+/g, '');
-            $('#brand-name').textContent = slug.slice(0, 14);
             $('#footer-business').textContent =
-                `© ${cfg.business_name} · ${cfg.business_email}`;
-            document.title = `// ${cfg.business_name.toLowerCase()}`;
+                `© ${new Date().getFullYear()} ${cfg.business_name} · ${cfg.business_email}`;
+            document.title = `Leistungen – ${cfg.business_name}`;
         }
     } catch {}
 }
@@ -281,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#cart-overlay').addEventListener('click', closeCart);
     $('#checkout-btn').addEventListener('click', showCheckoutView);
     $('#back-to-cart').addEventListener('click', showCartView);
+    $('#back-to-cart').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showCartView(); } });
     $('#checkout-form').addEventListener('submit', placeOrder);
     $('#payment-done-btn').addEventListener('click', closeCart);
     $('#copy-address').addEventListener('click', copyAddress);
