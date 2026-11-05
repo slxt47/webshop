@@ -18,6 +18,7 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const app = express();
+app.disable('x-powered-by');
 
 // ---------- Config ----------
 const PORT = process.env.PORT || 3000;
