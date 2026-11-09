@@ -18,6 +18,7 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const app = express();
+app.disable('x-powered-by');
 
 // ---------- Config ----------
 const PORT = process.env.PORT || 3000;
@@ -88,7 +89,7 @@ const mailer = nodemailer.createTransport({
 });
 
 // ---------- Middleware ----------
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '64kb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -117,6 +118,41 @@ async function ensureAdmin() {
         console.log(`[init] Admin-User "${ADMIN_USER}" angelegt.`);
     }
 }
+
+// ---------- Echte Besucher-IP ----------
+// Der Shop läuft hinter Cloudflare-Tunnel -> edge-log -> Docker: req.ip wäre sonst für ALLE Besucher die Proxy-Adresse
+// (5 Fehlversuche von irgendwem sperrten den Admin-Login für alle). Cloudflare setzt CF-Connecting-IP; das gilt nur,
+// wenn die Anfrage von localhost/Docker-Netz kommt. Rückfall: LETZTE Adresse in X-Forwarded-For (die erste ist fälschbar).
+const net = require('net');
+function vertrauterProxy(addr) {
+    const a = String(addr || '').replace(/^::ffff:/, '');
+    return a === '127.0.0.1' || a === '::1' || /^172\.(1[6-9]|2\d|3[01])\./.test(a) || /^10\./.test(a) || /^192\.168\./.test(a);
+}
+function clientIp(req) {
+    const direkt = req.socket?.remoteAddress || 'unknown';
+    if (!vertrauterProxy(direkt)) return direkt;
+    const cf = String(req.headers['cf-connecting-ip'] || '').trim();
+    if (net.isIP(cf)) return cf;
+    const xff = String(req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);
+    const letzte = xff[xff.length - 1];
+    return net.isIP(letzte || '') ? letzte : direkt;
+}
+
+// ---------- Bestellungen begrenzen (in-memory) ----------
+// Jede Anfrage verschickt eine Bestätigungsmail an die angegebene Adresse – ohne Grenze ließe sich der Shop
+// missbrauchen, um Mails an fremde Adressen zu schicken. Pro IP 5 und pro E-Mail-Adresse 3 Anfragen je Stunde.
+const ORDER_WINDOW_MS = 60 * 60 * 1000;
+const orderHits = new Map(); // key -> [timestamps]
+function orderLimitOk(key, max) {
+    const now = Date.now();
+    const list = (orderHits.get(key) || []).filter(ts => now - ts < ORDER_WINDOW_MS);
+    if (list.length >= max) { orderHits.set(key, list); return false; }
+    list.push(now); orderHits.set(key, list); return true;
+}
+setInterval(() => {
+    const now = Date.now();
+    for (const [k, list] of orderHits) if (!list.some(ts => now - ts < ORDER_WINDOW_MS)) orderHits.delete(k);
+}, 10 * 60 * 1000).unref();
 
 // ---------- Login Rate-Limiting (in-memory) ----------
 const loginAttempts = new Map(); // ip -> { count, blockedUntil }
@@ -176,8 +212,22 @@ app.post('/api/orders', async (req, res) => {
     if (!customer_name || !customer_email || !Array.isArray(items) || items.length === 0 || !payment_currency) {
         return res.status(400).json({ error: 'Pflichtfelder fehlen' });
     }
+    if (typeof customer_name !== 'string' || typeof customer_email !== 'string'
+        || (customer_phone != null && typeof customer_phone !== 'string') || (notes != null && typeof notes !== 'string')) {
+        return res.status(400).json({ error: 'Ungültige Eingabe' });
+    }
+    if (customer_name.trim().length > 100 || customer_email.length > 254 || (customer_phone || '').length > 40 || (notes || '').length > 2000) {
+        return res.status(400).json({ error: 'Eine Eingabe ist zu lang.' });
+    }
+    if (items.length > 50 || items.some(i => parseInt(i?.quantity, 10) > 100)) {
+        return res.status(400).json({ error: 'Zu viele Leistungen in einer Anfrage.' });
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer_email)) {
         return res.status(400).json({ error: 'Ungültige E-Mail' });
+    }
+    const ip = clientIp(req);
+    if (!orderLimitOk('ip:' + ip, 5) || !orderLimitOk('mail:' + customer_email.trim().toLowerCase(), 3)) {
+        return res.status(429).json({ error: 'Zu viele Anfragen in kurzer Zeit. Bitte versuch es in einer Stunde noch einmal.' });
     }
 
     // Crypto-Option validieren
@@ -339,7 +389,7 @@ function escapeHtml(s) {
 // =============================================================
 
 app.post('/api/admin/login', async (req, res) => {
-    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    const ip = clientIp(req);
     const rate = checkLoginRate(ip);
     if (!rate.allowed) {
         return res.status(429).json({ error: `Zu viele Versuche. In ${rate.retryInSec}s erneut versuchen.` });
@@ -619,6 +669,8 @@ function generateInvoicePdf(stream, order, items) {
 
 // Shop
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/impressum', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'impressum.html')));
+app.get('/datenschutz', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'datenschutz.html')));
 
 // Konfigurations-Endpoint für Frontend (Business-Name etc.)
 app.get('/api/config', (_req, res) => {

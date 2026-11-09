@@ -10,7 +10,7 @@ Alles in **einem Befehl** via Docker startbar.
 - **Datenbank:** PostgreSQL 16
 - **PDF:** PDFKit (Rechnungs-Generierung)
 - **E-Mail:** Nodemailer + Mailpit (fängt Test-Mails ab)
-- **Frontend:** Vanilla HTML/CSS/JS, Dark-Tech-Theme
+- **Frontend:** Vanilla HTML/CSS/JS ohne Build-Schritt, Design nach Apple HIG (Systemschrift, keine Web-Fonts, kein CDN), **hell/dunkel umschaltbar** (Standard dunkel)
 
 ## Schnellstart
 
@@ -34,6 +34,9 @@ Wenn jemand `/admin` aufruft kommt 404 — der Pfad existiert scheinbar gar nich
 ## Features
 
 ### Public Shop (`/`)
+- Design wie die übrigen slxt-Seiten: Himmel-Verlauf, Sternenhimmel im dunklen Modus, Glas-Kopfleiste, 44-pt-Trefferflächen
+- **Hell/Dunkel-Schalter** in der Kopfleiste (`public/js/modus.js`, Wahl bleibt im Browser, Standard dunkel)
+- **Impressum** (`/impressum`) und **Datenschutz** (`/datenschutz`) als eigene Seiten
 - Service-Katalog mit Kategorie + Aufwand pro Service
 - Buchungs-Drawer (Mehrfachauswahl, Mengen)
 - Checkout mit Name, E-Mail, Telefon (optional), **freitext-Anmerkungen**
@@ -56,7 +59,9 @@ Drei Tabs:
 
 ### Sicherheit
 - Geheimer URL-Pfad fürs Admin-Panel (`ADMIN_PATH`)
-- Rate-Limit: max. 5 Login-Versuche / 15 Min pro IP
+- Rate-Limit: max. 5 Login-Versuche / 15 Min **pro echter Besucher-IP** (`CF-Connecting-IP` bzw. `X-Forwarded-For` nur von vertrauenswürdigen Proxys)
+- Bestell-Grenzen gegen Missbrauch: höchstens 5 Bestellungen pro Stunde und IP, 3 pro Stunde und E-Mail-Adresse
+- Längen- und Mengenprüfung aller Eingaben, JSON-Körper höchstens 64 KB
 - JWT in HttpOnly-Cookie (12h Gültigkeit)
 - bcrypt für Passwort-Hashes
 
@@ -137,10 +142,15 @@ shop/
 └── public/
     ├── index.html          Shop
     ├── admin.html          Admin (Login + Dashboard)
-    ├── css/style.css
+    ├── impressum.html      Impressum (Angaben anpassen!)
+    ├── datenschutz.html    Datenschutzerklärung (Angaben anpassen!)
+    ├── logo.svg            Logo (+ logo-180.png für den Home-Bildschirm)
+    ├── css/style.css       Design-System (Tokens hell/dunkel)
     └── js/
         ├── shop.js
-        └── admin.js
+        ├── admin.js
+        ├── himmel.js       Sternenhimmel + Sternschnuppen
+        └── modus.js        Hell/Dunkel-Schalter
 ```
 
 ## Änderungen (Oktober 2026)

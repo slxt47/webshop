@@ -26,8 +26,8 @@ function escapeHtml(s) {
 }
 
 const STATUS_LABELS = {
-    pending: 'pending', in_progress: 'in progress',
-    completed: 'completed', cancelled: 'cancelled',
+    pending: 'Offen', in_progress: 'In Arbeit',
+    completed: 'Erledigt', cancelled: 'Storniert',
 };
 
 // ---------- Auth ----------
@@ -65,10 +65,10 @@ async function login(e) {
             }),
         });
         const data = await r.json();
-        if (!r.ok) { err.textContent = '✗ ' + (data.error || 'Login fehlgeschlagen'); return; }
+        if (!r.ok) { err.textContent = data.error || 'Anmeldung fehlgeschlagen'; return; }
         await checkAuth();
     } catch {
-        err.textContent = '✗ Netzwerkfehler';
+        err.textContent = 'Keine Verbindung – bitte noch einmal versuchen.';
     }
 }
 
@@ -111,31 +111,31 @@ async function loadAnalytics() {
 function renderStats(s) {
     $('#stat-cards').innerHTML = `
         <div class="stat-card">
-            <div class="label">umsatz (bezahlt)</div>
+            <div class="label">Umsatz (bezahlt)</div>
             <div class="value accent">${fmt(s.paid_revenue)}</div>
             <div class="sub">letzte 30 Tage: ${fmt(s.revenue_30d)}</div>
         </div>
         <div class="stat-card">
-            <div class="label">offene zahlungen</div>
+            <div class="label">Offene Zahlungen</div>
             <div class="value warning">${fmt(s.unpaid_revenue)}</div>
-            <div class="sub">noch nicht eingegangen</div>
+            <div class="sub">Noch nicht eingegangen</div>
         </div>
         <div class="stat-card">
-            <div class="label">bestellungen gesamt</div>
+            <div class="label">Bestellungen gesamt</div>
             <div class="value">${s.total_orders}</div>
             <div class="sub">letzte 30 Tage: ${s.orders_30d}</div>
         </div>
         <div class="stat-card">
-            <div class="label">durchschnitt</div>
+            <div class="label">Durchschnitt</div>
             <div class="value">${s.total_orders ? fmt(Math.round((s.paid_revenue + s.unpaid_revenue) / s.total_orders)) : '—'}</div>
-            <div class="sub">je bestellung</div>
+            <div class="sub">Je Bestellung</div>
         </div>
     `;
 }
 
 function renderChart14d(data) {
     if (!data || data.length === 0) {
-        $('#chart-14d').innerHTML = '<div class="empty-state">keine daten</div>';
+        $('#chart-14d').innerHTML = '<div class="empty-state">Noch keine Daten</div>';
         return;
     }
     const max = Math.max(...data.map(d => d.revenue), 100);
@@ -152,13 +152,13 @@ function renderChart14d(data) {
                       fill="${isToday ? 'var(--accent)' : 'var(--accent-dim)'}"
                       opacity="${d.revenue > 0 ? 0.9 : 0.15}"
                       rx="3" ry="3">
-                    <title>${fmtDay(d.day)}: ${fmt(d.revenue)} (${d.orders} order${d.orders!==1?'s':''})</title>
+                    <title>${fmtDay(d.day)}: ${fmt(d.revenue)} (${d.orders} ${d.orders === 1 ? 'Bestellung' : 'Bestellungen'})</title>
                 </rect>
-                <text x="${x + W/2}" y="178" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-low)">
+                <text x="${x + W/2}" y="178" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="var(--text-low)">
                     ${fmtDay(d.day)}
                 </text>
                 ${d.revenue > 0 ? `
-                <text x="${x + W/2}" y="${y - 4}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">
+                <text x="${x + W/2}" y="${y - 4}" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="var(--text-dim)">
                     ${(d.revenue / 100).toFixed(0)}€
                 </text>` : ''}
             </g>
@@ -177,7 +177,7 @@ function renderChart14d(data) {
 function renderTopServices(top) {
     const box = $('#top-services');
     if (!top || top.length === 0) {
-        box.innerHTML = '<div class="empty-state">noch keine daten</div>';
+        box.innerHTML = '<div class="empty-state">Noch keine Daten</div>';
         return;
     }
     const max = Math.max(...top.map(t => t.revenue));
@@ -213,7 +213,7 @@ function renderPaymentDist(rows) {
         <div class="dist-row">
             <span class="crypto-tag">${escapeHtml(r.code)}</span>
             <span style="flex:1;color:var(--text-dim);font-family:var(--mono);font-size:12px;">
-                ${r.c} order${r.c!==1?'s':''}
+                ${r.c} ${r.c === 1 ? 'Bestellung' : 'Bestellungen'}
             </span>
             <span class="dist-count accent">${fmt(r.revenue)}</span>
         </div>
@@ -234,7 +234,7 @@ function renderRecent(rows) {
                     <span class="recent-name">${escapeHtml(o.customer_name)}</span>
                     <span class="recent-when">${fmtDate(o.created_at)}</span>
                     <span class="status-badge ${o.status}">${STATUS_LABELS[o.status] || o.status}</span>
-                    <span class="status-badge ${o.payment_status === 'paid' ? 'shipped' : 'pending'}">${o.payment_status}</span>
+                    <span class="status-badge ${o.payment_status === 'paid' ? 'shipped' : 'pending'}">${o.payment_status === 'paid' ? 'Bezahlt' : 'Nicht bezahlt'}</span>
                     <span class="recent-total">${fmt(o.total_cents)}</span>
                 </div>
             `).join('')}
@@ -251,23 +251,23 @@ let editingId = null;
 async function loadServices() {
     const r = await fetch('/api/admin/services');
     const services = await r.json();
-    $('#services-meta').textContent = `${services.length} services`;
+    $('#services-meta').textContent = `${services.length} ${services.length === 1 ? 'Leistung' : 'Leistungen'}`;
     const list = $('#admin-services');
     if (services.length === 0) {
-        list.innerHTML = '<div class="empty-state">noch keine services</div>';
+        list.innerHTML = '<div class="empty-state"><strong>Noch keine Leistungen</strong><span>Leg links die erste an.</span></div>';
         return;
     }
     list.innerHTML = services.map(s => `
         <div class="admin-product-row">
             <img src="${escapeHtml(s.image_url || '')}" alt="" onerror="this.style.opacity=0.2">
             <div class="meta">
-                <h4>${escapeHtml(s.name)} ${s.active ? '' : '<span style="color:var(--text-low);font-size:11px;">(versteckt)</span>'}</h4>
+                <h4>${escapeHtml(s.name)} ${s.active ? '' : '<span style="color:var(--text-low);font-size:11px;">(verborgen)</span>'}</h4>
                 <div class="sub">#${String(s.id).padStart(4,'0')}${s.category ? ' · ' + escapeHtml(s.category) : ''}${s.duration ? ' · ' + escapeHtml(s.duration) : ''}</div>
             </div>
             <div class="price">${fmt(s.price_cents)}</div>
             <div class="actions">
-                <button data-edit="${s.id}">edit</button>
-                <button class="danger" data-del="${s.id}">del</button>
+                <button type="button" data-edit="${s.id}">Bearbeiten</button>
+                <button type="button" class="danger" data-del="${s.id}">Löschen</button>
             </div>
         </div>
     `).join('');
@@ -292,8 +292,8 @@ function startEdit(s) {
     f.duration.value = s.duration || '';
     f.image_url.value = s.image_url || '';
     f.active.checked = !!s.active;
-    $('#service-form-title').textContent = `Service #${s.id} bearbeiten`;
-    $('#service-save-btn').textContent = '✓ aktualisieren';
+    $('#service-form-title').textContent = `Leistung #${s.id} bearbeiten`;
+    $('#service-save-btn').textContent = 'Änderungen sichern';
     $('#service-cancel-btn').style.display = 'inline-block';
     f.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -302,8 +302,8 @@ function cancelEdit() {
     editingId = null;
     $('#service-form').reset();
     $('#service-form').active.checked = true;
-    $('#service-form-title').textContent = 'Neuer Service';
-    $('#service-save-btn').textContent = '+ speichern';
+    $('#service-form-title').textContent = 'Neue Leistung';
+    $('#service-save-btn').textContent = 'Sichern';
     $('#service-cancel-btn').style.display = 'none';
     $('#service-error').textContent = '';
 }
@@ -335,17 +335,17 @@ async function saveService(e) {
         });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Fehler');
-        toast(editingId ? '✓ Aktualisiert' : '✓ Hinzugefügt', 'success');
+        toast(editingId ? 'Gesichert' : 'Leistung angelegt', 'success');
         cancelEdit();
         loadServices();
-    } catch (e) { err.textContent = '✗ ' + e.message; }
+    } catch (e) { err.textContent = e.message; }
 }
 
 async function deleteService(id) {
-    if (!confirm(`Service #${id} wirklich löschen?`)) return;
+    if (!confirm(`Leistung #${id} löschen? Das lässt sich nicht rückgängig machen.`)) return;
     const r = await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
-    if (!r.ok) return toast('✗ Fehler beim Löschen', 'error');
-    toast('✓ Gelöscht', 'success');
+    if (!r.ok) return toast('Löschen hat nicht geklappt', 'error');
+    toast('Gelöscht', 'success');
     loadServices();
 }
 
@@ -357,7 +357,7 @@ async function loadOrders() {
     const r = await fetch('/api/admin/orders');
     if (!r.ok) return;
     const orders = await r.json();
-    $('#orders-meta').textContent = `${orders.length} bestellungen`;
+    $('#orders-meta').textContent = `${orders.length} ${orders.length === 1 ? 'Bestellung' : 'Bestellungen'}`;
     const list = $('#orders-list');
     if (orders.length === 0) {
         list.innerHTML = '<div class="empty-state">noch keine bestellungen</div>';
@@ -369,7 +369,7 @@ async function loadOrders() {
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <span class="order-id">#${String(o.id).padStart(5,'0')}</span>
                     <span class="status-badge ${o.status}">${STATUS_LABELS[o.status] || o.status}</span>
-                    <span class="status-badge ${o.payment_status === 'paid' ? 'shipped' : 'pending'}">${o.payment_status}</span>
+                    <span class="status-badge ${o.payment_status === 'paid' ? 'shipped' : 'pending'}">${o.payment_status === 'paid' ? 'Bezahlt' : 'Nicht bezahlt'}</span>
                     <span class="crypto-tag">${escapeHtml(o.payment_currency)}</span>
                 </div>
                 <span class="when">${fmtDate(o.created_at)}</span>
@@ -388,27 +388,27 @@ async function loadOrders() {
                 `).join('')}
             </div>
             <div class="addr-block">
-                <span class="label">wallet:</span>
+                <span class="label">Wallet: </span>
                 <code>${escapeHtml(o.payment_address)}</code>
             </div>
             <div class="foot">
                 <span class="total">${fmt(o.total_cents)}</span>
                 <div class="order-actions">
                     <select data-pay-for="${o.id}" title="Zahlungsstatus">
-                        <option value="unpaid" ${o.payment_status==='unpaid'?'selected':''}>unpaid</option>
-                        <option value="paid"   ${o.payment_status==='paid'?'selected':''}>paid</option>
+                        <option value="unpaid" ${o.payment_status==='unpaid'?'selected':''}>Nicht bezahlt</option>
+                        <option value="paid"   ${o.payment_status==='paid'?'selected':''}>Bezahlt</option>
                     </select>
                     <select data-status-for="${o.id}" title="Bearbeitungsstatus">
-                        <option value="pending"     ${o.status==='pending'?'selected':''}>pending</option>
-                        <option value="in_progress" ${o.status==='in_progress'?'selected':''}>in progress</option>
-                        <option value="completed"   ${o.status==='completed'?'selected':''}>completed</option>
-                        <option value="cancelled"   ${o.status==='cancelled'?'selected':''}>cancelled</option>
+                        <option value="pending"     ${o.status==='pending'?'selected':''}>Offen</option>
+                        <option value="in_progress" ${o.status==='in_progress'?'selected':''}>In Arbeit</option>
+                        <option value="completed"   ${o.status==='completed'?'selected':''}>Erledigt</option>
+                        <option value="cancelled"   ${o.status==='cancelled'?'selected':''}>Storniert</option>
                     </select>
                     <a href="/api/admin/orders/${o.id}/invoice.pdf"
                        target="_blank"
                        class="invoice-btn"
                        title="Rechnung als PDF">
-                        📄 PDF
+                        Rechnung (PDF)
                     </a>
                 </div>
             </div>
@@ -422,8 +422,8 @@ async function loadOrders() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: e.target.value }),
         });
-        if (r.ok) { toast(`✓ #${id} → ${e.target.value}`, 'success'); loadOrders(); }
-        else toast('✗ Fehler', 'error');
+        if (r.ok) { toast(`#${id}: ${STATUS_LABELS[e.target.value] || e.target.value}`, 'success'); loadOrders(); }
+        else toast('Das hat nicht geklappt', 'error');
     }));
 
     list.querySelectorAll('[data-pay-for]').forEach(s => s.addEventListener('change', async e => {
@@ -433,8 +433,8 @@ async function loadOrders() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment_status: e.target.value }),
         });
-        if (r.ok) { toast(`✓ #${id} payment → ${e.target.value}`, 'success'); loadOrders(); }
-        else toast('✗ Fehler', 'error');
+        if (r.ok) { toast(`#${id}: ${e.target.value === 'paid' ? 'Bezahlt' : 'Nicht bezahlt'}`, 'success'); loadOrders(); }
+        else toast('Das hat nicht geklappt', 'error');
     }));
 }
 

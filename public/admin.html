@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>// admin</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Verwaltung – Shop</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#f4f1fb">
+    <script src="/js/modus.js?v=4"></script>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
 </head>
 <body>
 
     <!-- ========== LOGIN ========== -->
     <div class="login-page" id="login-view">
         <div class="login-card">
-            <div class="terminal">
-                <span class="prompt">$</span> ssh admin@service<br>
-                <span style="color:var(--text-low);">authentication required ...</span>
-            </div>
-            <h1>Admin</h1>
+            <img class="logo" src="/logo.svg" alt="" width="64" height="64">
+            <h1>Verwaltung</h1>
             <form id="login-form">
                 <div class="field">
-                    <label>username</label>
-                    <input type="text" name="username" autocomplete="username" required>
+                    <label for="l-user">Benutzername</label>
+                    <input id="l-user" type="text" name="username" autocapitalize="none" spellcheck="false" autocomplete="username" required>
                 </div>
                 <div class="field">
-                    <label>password</label>
-                    <input type="password" name="password" autocomplete="current-password" required>
+                    <label for="l-pw">Passwort</label>
+                    <input id="l-pw" type="password" name="password" autocomplete="current-password" required>
                 </div>
-                <button type="submit" class="primary submit">→ login</button>
-                <div class="error" id="login-error"></div>
+                <button type="submit" class="primary submit">Anmelden</button>
+                <div class="error" id="login-error" role="alert"></div>
             </form>
         </div>
     </div>
@@ -36,21 +38,22 @@
         <header class="site-header">
             <div class="inner">
                 <div class="brand">
-                    <span class="dot"></span>
-                    admin<span class="slash">/</span><span class="accent">panel</span>
+                    <img src="/logo.svg" alt="" width="32" height="32">
+                    <span>Verwaltung<span class="accent">.</span></span>
                 </div>
                 <div class="nav-actions">
+                <button class="modus-knopf" type="button" data-modus-schalter></button>
                     <span class="badge" id="me-badge">—</span>
-                    <button id="logout-btn">logout</button>
+                    <button id="logout-btn" type="button">Abmelden</button>
                 </div>
             </div>
         </header>
 
         <div class="admin-layout">
-            <div class="admin-tabs">
-                <button class="tab active" data-tab="analytics">// auswertung</button>
-                <button class="tab" data-tab="services">// services</button>
-                <button class="tab" data-tab="orders">// bestellungen</button>
+            <div class="admin-tabs" role="tablist" aria-label="Bereiche">
+                <button class="tab active" data-tab="analytics">Auswertung</button>
+                <button class="tab" data-tab="services">Leistungen</button>
+                <button class="tab" data-tab="orders">Bestellungen</button>
             </div>
 
             <!-- =========== ANALYTICS =========== -->
@@ -63,7 +66,7 @@
                         <div id="chart-14d"></div>
                     </div>
                     <div class="panel">
-                        <h3>Top Services</h3>
+                        <h3>Top-Leistungen</h3>
                         <div id="top-services"></div>
                     </div>
                 </div>
@@ -89,50 +92,50 @@
             <div class="tab-panel" id="tab-services">
                 <div class="admin-grid">
                     <div class="panel">
-                        <h3 id="service-form-title">Neuer Service</h3>
+                        <h3 id="service-form-title">Neue Leistung</h3>
                         <form id="service-form">
                             <input type="hidden" name="id">
                             <div class="field">
-                                <label>name</label>
-                                <input type="text" name="name" required>
+                                <label for="s-name">Name</label>
+                                <input id="s-name" type="text" name="name" required>
                             </div>
                             <div class="field">
-                                <label>beschreibung</label>
-                                <textarea name="description" rows="3"></textarea>
+                                <label for="s-desc">Beschreibung</label>
+                                <textarea id="s-desc" name="description" rows="3"></textarea>
                             </div>
                             <div class="field-row">
                                 <div class="field">
-                                    <label>preis (EUR)</label>
-                                    <input type="number" name="price_eur" step="0.01" min="0" required>
+                                    <label for="s-preis">Preis (EUR)</label>
+                                    <input id="s-preis" type="number" inputmode="decimal" name="price_eur" step="0.01" min="0" required>
                                 </div>
                                 <div class="field">
-                                    <label>kategorie</label>
-                                    <input type="text" name="category" placeholder="z.B. Beratung">
+                                    <label for="s-kat">Kategorie</label>
+                                    <input id="s-kat" type="text" name="category" placeholder="z. B. Beratung">
                                 </div>
                             </div>
                             <div class="field">
-                                <label>dauer / aufwand</label>
-                                <input type="text" name="duration" placeholder="z.B. 60 min, 1-2 Tage">
+                                <label for="s-dauer">Dauer / Aufwand</label>
+                                <input id="s-dauer" type="text" name="duration" placeholder="z. B. 60 min, 1–2 Tage">
                             </div>
                             <div class="field">
-                                <label>bild-url</label>
-                                <input type="url" name="image_url" placeholder="https://...">
+                                <label for="s-bild">Bild-Adresse</label>
+                                <input id="s-bild" type="url" name="image_url" placeholder="https://...">
                             </div>
                             <div class="field" style="display:flex;align-items:center;gap:10px;">
                                 <input type="checkbox" name="active" id="service-active" checked style="width:auto;margin:0;">
-                                <label for="service-active" style="margin:0;font-family:var(--mono);text-transform:none;">sichtbar im shop</label>
+                                <label for="service-active" style="margin:0;">Im Shop sichtbar</label>
                             </div>
                             <div style="display:flex;gap:8px;margin-top:16px;">
-                                <button type="submit" class="primary" style="flex:1;" id="service-save-btn">+ speichern</button>
-                                <button type="button" id="service-cancel-btn" style="display:none;">abbrechen</button>
+                                <button type="submit" class="primary" style="flex:1;" id="service-save-btn">Sichern</button>
+                                <button type="button" id="service-cancel-btn" style="display:none;">Abbrechen</button>
                             </div>
-                            <div class="error" id="service-error" style="color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:8px;min-height:1.2em;"></div>
+                            <div class="error" id="service-error" role="alert" style="margin-top:8px;"></div>
                         </form>
                     </div>
 
                     <div>
                         <div class="section-header">
-                            <h2>Katalog</h2>
+                            <h2>Leistungen</h2>
                             <span class="meta" id="services-meta"></span>
                         </div>
                         <div class="admin-product-list" id="admin-services"></div>
@@ -151,8 +154,9 @@
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="/js/admin.js"></script>
+    <script src="/js/himmel.js?v=1" defer></script>
+    <script src="/js/admin.js?v=3"></script>
 </body>
 </html>
