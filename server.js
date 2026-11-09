@@ -191,7 +191,12 @@ app.get('/api/payment-options', (_req, res) => {
 // Bestellung anlegen
 app.post('/api/orders', async (req, res) => {
     const { customer_name, customer_email, customer_phone, notes,
-            items, payment_currency } = req.body || {};
+            items, payment_currency, agb, vorzeitig } = req.body || {};
+
+    // FAGG: Bestellung nur mit akzeptierten AGB; vorzeitiger Beginn nur auf ausdrücklichen Wunsch (§ 10, § 18 FAGG)
+    if (agb !== true) {
+        return res.status(400).json({ error: 'Bitte bestätige, dass du die AGB und die Widerrufsbelehrung gelesen hast.' });
+    }
 
     if (!customer_name || !customer_email || !Array.isArray(items) || items.length === 0 || !payment_currency) {
         return res.status(400).json({ error: 'Pflichtfelder fehlen' });
@@ -250,10 +255,11 @@ app.post('/api/orders', async (req, res) => {
 
         const { rows: orderRows } = await client.query(
             `INSERT INTO orders (customer_name, customer_email, customer_phone, notes,
-                                 total_cents, payment_currency, payment_address)
-             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, created_at`,
+                                 total_cents, payment_currency, payment_address,
+                                 agb_akzeptiert_at, vorzeitiger_beginn)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, now(), $8) RETURNING id, created_at`,
             [customer_name, customer_email, customer_phone || null, notes || null,
-             total, chosen.code, chosen.address]
+             total, chosen.code, chosen.address, vorzeitig === true]
         );
         const order = orderRows[0];
 
@@ -655,6 +661,8 @@ function generateInvoicePdf(stream, order, items) {
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/impressum', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'impressum.html')));
 app.get('/datenschutz', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'datenschutz.html')));
+app.get('/agb', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'agb.html')));
+app.get('/widerruf', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'widerruf.html')));
 
 // Konfigurations-Endpoint für Frontend (Business-Name etc.)
 app.get('/api/config', (_req, res) => {

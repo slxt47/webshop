@@ -8,7 +8,7 @@
     <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#f4f1fb">
     <script src="/js/modus.js?v=4"></script>
-    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="stylesheet" href="/css/style.css?v=4">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/logo-180.png">
 </head>
@@ -58,6 +58,8 @@
         <div id="footer-business">© slxt.org</div>
         <a href="/impressum">Impressum</a>
         <a href="/datenschutz">Datenschutz</a>
+        <a href="/agb">AGB</a>
+        <a href="/widerruf">Widerruf</a>
     </footer>
 
     <!-- Auswahl / Bestellung (Blatt) -->
@@ -104,8 +106,12 @@
                 <div class="crypto-options" id="crypto-options"></div>
             </div>
             <div class="summary" id="checkout-summary"></div>
-            <p class="rechtshinweis">Mit dem Absenden werden deine Angaben zur Bearbeitung der Anfrage gespeichert – Details in der <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a>.</p>
-            <button type="submit" class="primary checkout-btn" id="place-order-btn">Anfrage senden</button>
+            <label class="zustimmung"><input type="checkbox" name="agb" id="f-agb" required>
+                <span>Ich habe die <a href="/agb" target="_blank" rel="noopener">AGB</a> und die <a href="/widerruf" target="_blank" rel="noopener">Widerrufsbelehrung</a> gelesen und akzeptiere die AGB.</span></label>
+            <label class="zustimmung"><input type="checkbox" name="vorzeitig" id="f-vorzeitig">
+                <span>Optional: Ich verlange, dass vor Ende der 14-tägigen Widerrufsfrist mit der Leistung begonnen wird. Mir ist bekannt, dass ich mein Widerrufsrecht bei vollständiger Erbringung verliere.</span></label>
+            <p class="rechtshinweis">Deine Angaben werden zur Abwicklung der Bestellung gespeichert – Details in der <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a>.</p>
+            <button type="submit" class="primary checkout-btn" id="place-order-btn">Zahlungspflichtig bestellen</button>
         </form>
 
         <!-- 3: Zahlung -->
@@ -113,7 +119,7 @@
             <div class="payment-result">
                 <div class="payment-confirm">
                     <div class="check" aria-hidden="true">✓</div>
-                    <h2>Anfrage <span id="confirm-id">#0</span> erhalten</h2>
+                    <h2>Bestellung <span id="confirm-id">#0</span> erhalten</h2>
                     <p>Die Zahlungsdaten bekommst du auch per E-Mail.</p>
                 </div>
                 <div class="payment-block">
@@ -147,6 +153,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="/js/himmel.js?v=1" defer></script>
-    <script src="/js/shop.js?v=3" defer></script>
+    <script src="/js/shop.js?v=4" defer></script>
 </body>
 </html>

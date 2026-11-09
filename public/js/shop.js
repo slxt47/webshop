@@ -247,6 +247,8 @@ async function placeOrder(e) {
                 customer_email: form.customer_email.value.trim(),
                 customer_phone: form.customer_phone.value.trim(),
                 notes:          form.notes.value.trim(),
+                agb:            form.agb.checked,
+                vorzeitig:      form.vorzeitig.checked,
                 payment_currency: selectedCurrency,
                 items,
             }),
@@ -269,7 +271,7 @@ async function placeOrder(e) {
         toast(err.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Anfrage senden';
+        btn.textContent = 'Zahlungspflichtig bestellen';
     }
 }
 

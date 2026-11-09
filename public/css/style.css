@@ -337,3 +337,11 @@ a.invoice-btn:active { transform: scale(.96); }
 /* Hell/Dunkel-Schalter (js/modus.js): runder Knopf in der Kopfleiste, Standard hell */
 .modus-knopf { width: var(--treffer); min-width: var(--treffer); padding: 0; border-radius: 50%; background: var(--flaeche-2); color: var(--text); }
 .modus-knopf:hover { background: var(--flaeche-3); }
+
+/* Rechtstexte: Stand, offene Punkte, Muster-Formular; Zustimmung im Bestellformular */
+.rechtlich .stand { color: var(--text-2); font-size: var(--t-klein); }
+.rechtlich .todo { padding: 0 .3em; border-radius: 4px; background: #fff3bf; color: #1d1d1f; }
+.rechtlich .formular { margin: 1em 0; padding: 16px 18px; border: 1px dashed var(--line, rgba(30, 20, 60, .2)); border-radius: 14px; }
+.zustimmung { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; margin: 0 0 12px; font-size: var(--t-klein); color: var(--text-2); cursor: pointer; }
+.zustimmung input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--akzent, #5b3df5); }
+.zustimmung a { color: inherit; text-decoration: underline; }

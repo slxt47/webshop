@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS orders (
     payment_address  TEXT NOT NULL,                              -- Wallet-Adresse zum Zeitpunkt der Order
     payment_status   VARCHAR(40) NOT NULL DEFAULT 'unpaid',      -- unpaid | paid
     status           VARCHAR(40) NOT NULL DEFAULT 'pending',     -- pending | in_progress | completed | cancelled
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    agb_akzeptiert_at  TIMESTAMPTZ,                               -- Zeitpunkt der AGB-Zustimmung (FAGG)
+    vorzeitiger_beginn BOOLEAN NOT NULL DEFAULT FALSE             -- Beginn vor Ende der Widerrufsfrist verlangt (§ 10 FAGG)
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
